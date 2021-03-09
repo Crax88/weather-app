@@ -1,23 +1,70 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import "./App.css";
+import { fetchWeather } from "./api/fetchWeather";
 
 function App() {
+  const [lang, setLang] = useState("en");
+  const [query, setQuery] = useState("");
+  const [error, setError] = useState(false);
+  const [weather, setWeather] = useState();
+
+  const handleChange = (e) => setQuery(e.target.value);
+  const handlePress = async (e) => {
+    setError(false);
+    setWeather();
+    if (e.charCode === 13) {
+      const data = await fetchWeather(query, lang);
+      if (typeof data === "string") return setError(data);
+      if (!data) return setError(true);
+      setWeather(data);
+      setQuery("");
+    }
+  };
+  useEffect(() => {
+    const language = window.navigator.language.slice(0, 2);
+    setLang(language);
+  }, []);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div
+      className="main-container"
+      style={{ backgroundImage: "url(/images/bg.jpg)" }}
+    >
+      <input
+        className="city-input"
+        type="text"
+        placeholder={lang === "ru" ? "Поиск..." : "Search..."}
+        value={query}
+        onChange={handleChange}
+        onKeyPress={handlePress}
+      />
+      {error && (
+        <div className="error-message">
+          {lang === "ru"
+            ? "Возникла ошибка. Попробуйте еще раз."
+            : "Sorry an error occured. Please try again."}
+          <p>{error}</p>
+        </div>
+      )}
+      {weather && weather.main && (
+        <div className="city">
+          <h2 className="city-name">
+            <span>{weather.name}</span>
+            <sup>{weather.sys.country}</sup>
+          </h2>
+          <div className="city-temp">
+            {Math.round(weather.main.temp)}
+            <sup>&deg;C</sup>
+          </div>
+          <div className="info">
+            <img
+              className="city-icon"
+              src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`}
+              alt={weather.weather[0].description}
+            />
+            <p>{weather.weather[0].description}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
